@@ -4,7 +4,7 @@ import dotenv from 'dotenv'
 import axios from 'axios'
 
 dotenv.config()
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3001
 
 const app = express()
 
@@ -17,22 +17,23 @@ app.get('/', (_, res) => {
 })
 
 app.get('/devices', (_, res) => {
-	const PERSONAL_ACCESS_TOKEN = process.env.PERSONAL_ACCESS_TOKEN
+	const JSON_WEB_TOKEN = process.env.JSON_WEB_TOKEN
 	const headers = {
-		Authorization: `Bearer ${PERSONAL_ACCESS_TOKEN}`,
+		Authorization: `Bearer ${JSON_WEB_TOKEN}`,
 	}
 
 	axios
-		.post(
-			'https://hosted.mender.io/api/management/v1/useradm/auth/login',
-			{},
-			{ headers }
+		.get(
+			'https://hosted.mender.io/api/management/v1/useradm/users/me',
+			{headers}
 		)
-		.then((response) => res.status(200).json({ response }))
-		.catch((error) =>
+		.then((response) => response.data)
+		.then(data => res.status(200).json(data))
+		.catch((error) =>{
+			console.log(error)
 			res.status(400).json({
 				error,
-			})
+			})}
 		)
 })
 
