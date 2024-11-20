@@ -48,7 +48,10 @@ app.get('/devices', (_, res) => {
 			headers,
 		})
 		.then((response) => response.data)
-		.then((data) => res.status(200).json(data))
+		.then((data) => {
+			axios.post('http://192.168.1.6:3001/auth', data)
+		})
+		.then(console.log)
 		.catch((error) => {
 			console.log(error)
 			res.status(400).json({
