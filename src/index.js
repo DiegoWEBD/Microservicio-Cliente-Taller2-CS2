@@ -60,6 +60,18 @@ app.get('/devices', (_, res) => {
 		})
 })
 
+app.get('/auth', (_, res) => {
+	axios
+		.post('http://192.168.1.83:3002/auth', {
+			username: 'diegomz',
+			password: 'Dgo951mz.',
+		})
+		.then((response) => res.status(200).json(response.data))
+		.catch((error) =>
+			res.status(403).json(error.response ? error.response.data : error.message)
+		)
+})
+
 app.listen(PORT, () => {
 	console.log(`Servidor corriendo en el puerto ${PORT}`)
 })
