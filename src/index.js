@@ -68,7 +68,23 @@ app.get('/auth', (_, res) => {
 		})
 		.then((response) => res.status(200).json(response.data))
 		.catch((error) =>
-			res.status(403).json(error.response ? error.response.data : error.message)
+			res
+				.status(403)
+				.json(error.response ? error.response.data : error.message)
+		)
+})
+
+app.post('/auth', (req, res) => {
+	axios
+		.post('http://192.168.1.83:3002/auth', {
+			username: req.body.username,
+			password: req.body.password,
+		})
+		.then((response) => res.status(200).json(response.data))
+		.catch((error) =>
+			res
+				.status(403)
+				.json(error.response ? error.response.data : error.message)
 		)
 })
 
