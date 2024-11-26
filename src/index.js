@@ -2,6 +2,9 @@ import axios from 'axios'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
+import { authenticateToWso2 } from './wso2_auth'
+import { getMenderData } from './get_mender_data'
+import { sendDataToNginx } from './send_data_to_nginx'
 
 dotenv.config()
 const PORT = process.env.PORT || 3001
@@ -20,13 +23,13 @@ app.get('/', (_, res) => {
 
 app.get('/personal_info', (_, res) => {
 	const JSON_WEB_TOKEN = process.env.JSON_WEB_TOKEN
-	const headers = {
+	const menderHeaders = {
 		Authorization: `Bearer ${JSON_WEB_TOKEN}`,
 	}
 
 	axios
 		.get('https://hosted.mender.io/api/management/v1/useradm/users/me', {
-			headers,
+			menderHeaders,
 		})
 		.then((response) => response.data)
 		.then((data) => res.status(200).json(data))
@@ -39,13 +42,13 @@ app.get('/personal_info', (_, res) => {
 })
 
 app.get('/devices', (_, res) => {
-	const headers = {
+	const menderHeaders = {
 		Authorization: `Bearer ${process.env.JSON_WEB_TOKEN}`,
 	}
 
 	axios
 		.get('https://hosted.mender.io/api/management/v1/inventory/devices', {
-			headers,
+			headers: menderHeaders,
 		})
 		.then((response) => response.data)
 		.then((data) => {
@@ -60,31 +63,26 @@ app.get('/devices', (_, res) => {
 		})
 })
 
-app.get('/auth', (_, res) => {
-	axios
-		.post('http://192.168.1.83:3002/auth', {
-			username: 'diegomz',
-			password: 'Dgo951mz.',
-		})
-		.then((response) => res.status(200).json(response.data))
-		.catch((error) =>
-			res
-				.status(403)
-				.json(error.response ? error.response.data : error.message)
-		)
-})
+app.post('/auth', async (req, res) => {
+	const responseData = {
+		mender_data: undefined,
+		wso2_data: undefined,
+	}
 
-app.post('/auth', (req, res) => {
-	axios
-		.post('http://192.168.1.83:3002/auth', {
-			username: req.body.username,
-			password: req.body.password,
+	authenticateToWso2(req.body.username, req.body.password)
+		.then((data) => {
+			responseData.wso2_data = data
+			getMenderData()
 		})
-		.then((response) => res.status(200).json(response.data))
+		.then((data) => {
+			responseData.mender_data = data
+			sendDataToNginx(responseData)
+		})
 		.catch((error) =>
-			res
-				.status(403)
-				.json(error.response ? error.response.data : error.message)
+			res.status(error.code || 400).json({
+				message: 'Error al recuperar el recurso',
+				error,
+			})
 		)
 })
 
